@@ -1,0 +1,40 @@
+#!/bin/bash
+# ---------------------------------------------------------------------------
+# GetVNC - Command line utility to get vnc port on xenserver guests
+#
+# Copyright 2015,  <nikitux@gmail.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License at <http://www.gnu.org/licenses/> for
+# more details.
+#
+# Revision history:
+# ---------------------------------------------------------------------------
+
+VERSION="1.0"
+
+
+
+for i in `xe vm-list params=name-label | awk '{print $5}' | grep -v Control| grep . ` ; do
+
+domid=`xe vm-list name-label=$i params=dom-id --minimal`
+
+shopt -s extglob
+
+domid="${domid##*( )}"
+
+shopt -u extglob
+
+if [ "$domid" -ne "-1" ]; then
+        echo resident on $i , domid=$domid
+        xenstore-ls /local/domain/$domid/console |egrep -v '(tty|ring|^port)'
+fi
+done
+

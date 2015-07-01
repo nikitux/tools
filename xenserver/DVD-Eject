@@ -1,0 +1,61 @@
+#!/bin/bash
+
+#####################################################################################
+##                                                                                 ##
+##                                                                                 ##
+##  file :          all-dvd-eject.sh                                               ##
+##  description :   ejects all DVDs from VMs running in a XenServer pool           ##
+##                                                                                 ##
+##  parameter :     eject|dry                                                      ##
+##                  - eject will throw out all mapped DVD drives                   ##
+##                  - "dry" will show you which VM has mapped a DVD                ##
+##                                                                                 ##
+##  example:        ./all-dvd-eject.sh eject                                       ##
+##                  ./all-dvd-eject.sh dry                                         ##
+##                                                                                 ##
+##    known issues:   - The script doesn't work on VMs namend "Control"            ##
+##                                                                                 ##
+##    Use this script in your own risk and be careful to use it in productive      ##
+##  environments. This script was tested in a very simple way and just on          ##
+##  XenServer 5.5 with update 1. Therefore if you want to use it be sure           ##
+##  to do intensive tests for your environment.                                    ##
+##                                                                                 ##
+##  copyright (c) Jens Brunsen, Citrix Systems                                     ##
+#####################################################################################
+
+echo
+
+if [ $# -gt 0 ] ; then
+
+    VMLIST=`xe vm-list | grep "uuid ( RO) " | awk '{print $5}'`
+        
+    for VM in $VMLIST
+    do
+        VMNAME=`xe vm-list uuid=$VM | grep "name-label ( RW)" | awk '{print $4}'`
+        if [ "$VMNAME" != "Control" ] ; then
+            DVDSTATE=`xe vm-cd-list uuid=$VM | grep "empty ( RO)" | awk '{print $4}'`
+
+            if [ "$1" = "eject" ] ; then
+                if [ "$DVDSTATE" = "false" ] ; then
+                    xe vm-cd-eject uuid=$VM
+                    echo "$VMNAME : DVD/ISO ejected"
+                fi
+            fi
+        
+            if [ "$1" = "dry" ] ; then
+                if [ "$DVDSTATE" = "false" ] ; then
+                    echo "$VMNAME : DVD/ISO attached"
+                else
+                    echo "$VMNAME : empty"
+                fi
+            fi
+        fi
+    done
+    
+else
+    echo all-dvd-eject.sh:
+    echo "  error: Missing parameter."
+    echo "  usage: all_dvd_eject [eject|dry]"
+fi
+
+echo
