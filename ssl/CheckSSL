@@ -1,0 +1,88 @@
+#!/bin/bash
+# ---------------------------------------------------------------------------
+# checkssl - Command line utilitie for ssl certificate
+#
+# Copyright 2014,  <nikitux@gmail.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License at <http://www.gnu.org/licenses/> for
+# more details.
+#
+# Revision history:
+# ---------------------------------------------------------------------------
+
+VERSION="0.1"
+
+
+
+OS=`uname -a | awk '{print $1}'`
+
+if [ $OS == "Darwin" ]; then
+	echo "CheckSSL for OSX"
+	MD5='md5'
+else
+	echo "CheckSSL for Linux"
+	MD5='md5sum'
+
+fi		
+
+case "$#" in
+
+1) 
+
+ext=`echo "$1" | tail -c 4`
+
+case "$ext" in
+
+	csr) 	echo "Validando $ext .."
+		openssl req -text -noout -verify -in $1 ;;
+	
+	crt) 	echo "Validando $ext .."
+		openssl x509 -text -noout -in $1 ;;
+	*)
+        echo " 1)Validate .csr          CheckSSL domain.com.csr"
+        echo " 2)Validate .crt          CheckSSL domain.com.crt"
+        echo " 3)Validate .crt + .key   CheckSSL domain.com.crt domain.com.key"
+        echo " 4)Validate .root + .crt  CheckSSL rootCA.root domain.com.crt"
+
+esac
+;;
+
+2)
+
+	ext1=`echo "$1" | tail -c 4`
+	ext2=`echo "$2" | tail -c 4`
+
+	if [ $ext1 == "oot" ] && [ "$ext2" == "crt" ]; then
+		echo "Valido root"
+		openssl verify -CAfile $1 $2
+		exit 0
+	else
+		extcrt=$ext1
+		extkey=$ext2
+	fi
+
+	if [ "$extcrt" == "crt" ] && [ "$extkey" == "key" ] ; then
+		(openssl x509 -noout -modulus -in $1  | openssl md5 ;\
+   openssl rsa -noout -modulus -in $2 | openssl md5) | uniq
+		else
+		echo "Ingrese correctamente un .crt y un .key en el orden especificado"
+	fi
+	
+	
+;;
+
+*)
+	echo " 1)Validate .csr		CheckSSL domain.com.csr"
+	echo " 2)Validate .crt		CheckSSL domain.com.crt"
+	echo " 3)Validate .crt + .key	CheckSSL domain.com.crt domain.com.key"
+	echo " 4)Validate .root + .crt  CheckSSL rootCA.root domain.com.crt"
+
+esac	
