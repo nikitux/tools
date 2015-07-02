@@ -1,0 +1,64 @@
+#!/bin/bash
+# ---------------------------------------------------------------------------
+# CheckRBL - Check if your domain is listed on spamhaus.org
+#
+# Copyright 2013,  <nikitux@gmail.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License at <http://www.gnu.org/licenses/> for
+# more details.
+#
+# Revision history:
+# TODO:
+# ---------------------------------------------------------------------------
+
+VERSION="1.0"
+
+email="nikitux@gmail.com"
+
+server=('domain1' 'domain2' 'domain3' )
+ipserver=('1.1.1.1' '2.2.2.2' '3.3.3.3' )
+
+
+tLen=${#server[@]}
+
+srv=("${server[@]}" "${ipserver[@]}")
+
+UnixShell=("${server[@]}" "${ipserver[@]}")
+
+Correo=0
+
+for (( i=0; i<${tLen}; i++ ));
+do
+  curl  -s -A 'Mozilla/4.0' http://www.spamhaus.org/query/bl?ip=${ipserver[$i]} | grep ${ipserver[$i]} | cut -d ">" -f 3 | cut -d "<" -f1 > /tmp/reporte$i
+        grep "is listed" /tmp/reporte$i
+	status=`echo $?`
+	if [ $status -eq 0 ]; then
+		echo "Set email on"
+		Correo="1"
+		echo "################################################################" >> /tmp/reporte
+       	        echo "Checking server .... " ${server[$i]} " FAIL " >> /tmp/reporte
+	        cat /tmp/reporte$i >> /tmp/reporte
+	      else 
+		echo "Nothing to do" > /dev/null
+		#echo "################################################################" >> /tmp/reporte
+       	        echo "Checking server .... " ${server[$i]} " OK ">> /tmp/reporte
+		echo "################################################################" >> /tmp/reporte
+ 	fi
+	
+done
+
+
+if [ $Correo -eq 1 ]; then
+	cat /tmp/reporte | mutt -s "Reporte RBL" -- $email
+	else
+	echo "Nothing to do" > /dev/null
+fi
+
