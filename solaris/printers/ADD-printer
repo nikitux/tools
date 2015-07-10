@@ -1,0 +1,53 @@
+#!/bin/bash
+# -------------------------------------------------------------------------------
+# ADD-printer - Command line utilitie to add multiple network printer on Solaris
+#
+# Copyright 2014,  <nikitux@gmail.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License at <http://www.gnu.org/licenses/> for
+# more details.
+#
+# Revision history:
+# ------------------------------------------------------------------------------
+# If you want to list printer/ip you can use
+#
+# cd /etc/lp/printers && for i in `ls` ; do echo "Printer $i" ; cat  $i/configuration | grep dest  ; done
+#
+
+
+VERSION="1.0"
+
+
+#Replace your printer here
+
+pr_name[0]='printerx1'
+pr_name[1]='printerx2'
+pr_name[2]='printerx3'
+pr_name[3]='printerx4'
+
+pr_ip[0]='192.168.0.1'
+pr_ip[1]='192.168.0.2'
+pr_ip[2]='192.168.0.3'
+pr_ip[3]='192.168.0.4'
+
+
+for i in {0..0} ;  do 
+        echo "install ${pr_name[$i]}..."
+        lpadmin -p ${pr_name[$i]} -o protocol=bsd,dest=${pr_ip[$i]} -o nobanner -v /dev/null -m netstandard -T unknown -I any  
+        echo "Enable ${pr_name[$i]}..."
+        /usr/bin/enable ${pr_name[$i]}  
+        echo "Accept Jobs on ${pr_name[$i]}..." 
+        accept ${pr_name[$i]}
+        echo "Remove banner from  ${pr_name[$i]}..."
+        sed  -e 's/nobanner=no/nobanner=yes/g' /etc/lp/interfaces/${pr_name[$i]} > /tmp/${pr_name[$i]}
+        cp /tmp/${pr_name[$i]} /etc/lp/interfaces/${pr_name[$i]}
+done
+
